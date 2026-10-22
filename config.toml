@@ -1,0 +1,59 @@
+# Experiment settings. Prompt wording is in prompts.toml, not here.
+# Every key is validated; a typo stops the run before any LLM call.
+
+[experiment]
+name = "society"
+seed = 1
+
+[world]
+episodes = 3            # how many times the whole round-robin is played
+rounds_per_match = 5    # rounds between one pair of agents in one match
+noise = 0.0             # chance that an executed move is flipped (0 = no noise)
+shuffle_pairings = true
+
+[communication]
+mode = "none"           # none | pre_match | every_round
+exchanges = 1           # message swaps before the moves; 2+ lets agents reply to each other
+max_chars = 200
+public_board = false    # after each match agents may post a public statement everyone reads
+board_size = 6
+
+[reputation]
+mode = "none"           # none | score (scoreboard) | ledger (scoreboard + who did what to whom)
+window = 4              # ledger: how many recent matches of the partner are shown
+
+[memory]
+top_k = 6               # memory entries shown in each prompt
+
+[llm]
+provider = "mock"       # mock (offline, free) | ollama (local) | openrouter (paid API)
+# model = "qwen2.5:3b"  # default comes from OLLAMA_MODEL / OPENROUTER_MODEL
+temperature = 0.4
+max_retries = 3
+max_consecutive_fallbacks = 6   # abort (exit code 2, resumable) after this many failures in a row
+
+# The population. kind = "llm" agents are language models; kind = "classical" are Axelrod strategies.
+# A classical agent's "talk" is silent | honest (promises its real next move) | deceptive (always promises Alpha).
+[[agents]]
+name = "Ada"
+kind = "llm"
+
+[[agents]]
+name = "Bo"
+kind = "llm"
+
+[[agents]]
+name = "Cy"
+kind = "llm"
+
+[[agents]]
+name = "Dee"
+kind = "classical"
+strategy = "TitForTat"
+talk = "honest"
+
+[[agents]]
+name = "Eli"
+kind = "classical"
+strategy = "Defector"
+talk = "deceptive"

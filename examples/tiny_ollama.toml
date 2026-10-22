@@ -1,0 +1,25 @@
+[experiment]
+seed = 2
+[world]
+episodes = 1
+rounds_per_match = 2
+[communication]
+mode = "every_round"
+public_board = true
+[reputation]
+mode = "ledger"
+[llm]
+provider = "ollama"
+model = "qwen2.5:3b"
+timeout = 120
+[[agents]]
+name = "Ada"
+kind = "llm"
+[[agents]]
+name = "Bo"
+kind = "llm"
+[[agents]]
+name = "Eli"
+kind = "classical"
+strategy = "Defector"
+talk = "deceptive"

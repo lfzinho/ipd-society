@@ -1,0 +1,50 @@
+# All prompt text lives here. Edit this file, then preview with:  python main.py --show-prompt move
+# Blocks are plain text with {placeholders}; an unknown placeholder or a missing block fails at load.
+#
+# The agent's prompt is assembled as:  intro blocks  +  situation  +  task.
+# Which "comm_*" and "rep_*" intro blocks are used depends on [communication] / [reputation] in config.toml.
+# In TOML """ strings, a literal brace must be written doubled: {{ and }}.
+
+[blocks]
+rules = """You are {me}, one of {n_agents} agents in a repeated game. The other agents are: {others}.
+In every round you and one partner each choose Alpha or Beta at the same time, without knowing the other's choice.
+Points for this round (you / your partner):
+  both choose Alpha: 3 / 3
+  you Alpha, partner Beta: 0 / 5
+  you Beta, partner Alpha: 5 / 0
+  both choose Beta: 1 / 1"""
+
+goal = """Your goal is to finish with as many points as possible. Only your own total counts; the other agents' totals do not matter to you."""
+
+structure = """You play a match of {rounds} rounds against each other agent. Then everyone plays everyone again, for {episodes} episodes in total. Agents remember what happened in earlier matches, and you will meet the same agents again."""
+
+comm_none = """You cannot send messages. You only see what your partner chooses."""
+
+comm_pre_match = """Before the first round of each match you and your partner can send each other a short message. After that you only see each other's choices. Messages are only words: nothing forces anyone to do what they say."""
+
+comm_every_round = """Before every round you and your partner can send each other a short message. Messages are only words: nothing forces anyone to do what they say, and an agent may say one thing and choose another."""
+
+rep_none = """You do not see what your partner did against other agents."""
+
+rep_score = """A public scoreboard shows, for every agent, how often they played Alpha so far and how often they played Beta against a partner who played Alpha. Everyone sees the same scoreboard."""
+
+rep_ledger = """A public ledger records every round of every finished match: who played what against whom. Everyone can see it, so what an agent did to others is known to all."""
+
+board_on = """After each match every agent may post one public statement that all agents will read. Statements are only words and may be true or false."""
+
+[task]
+message = """Write the message you send to {partner} now.
+Reply with ONLY a JSON object:
+{{"message": "<what you say, at most {max_chars} characters>", "promise": "Alpha" or "Beta" or "none"}}
+"promise" is the choice you tell {partner} you will make; use "none" if you commit to nothing. It is not binding."""
+
+move = """Choose your move for this round.
+Reply with ONLY a JSON object:
+{{"decision": "Alpha" or "Beta", "expected_partner": "Alpha" or "Beta", "trust": <0-10, how much you believe {partner} will do what they say or what they did before>, "reasoning": "<one or two sentences comparing the points you expect from each choice>"}}"""
+
+reflection = """The match with {partner} is over. Think about what happened and what to do next time you meet them or anyone like them.
+Reply with ONLY a JSON object:
+{{"partner_assessment": "<what kind of agent {partner} seems to be, in one sentence>", "lesson": "<one short, general lesson, or empty>", "importance": <1-10, how useful the lesson is>{board_field}}}"""
+
+# Appended inside the reflection reply format when the public board is on.
+board_field = """, "public_statement": "<what you post for everyone to read, at most {max_chars} characters, or empty>\""""
