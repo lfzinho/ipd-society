@@ -12,8 +12,9 @@ This is Steps 2 and 3 of a three-step research project (the full plan is in
 | 3 | The same population with a **public record** of who did what to whom, and an optional public board for gossip. Does reputation change who cooperates with whom? | this project, `reputation` settings |
 
 Everything runs offline with a built-in mock model (free, instant, used by the tests). Real models run
-through Ollama (local) or OpenRouter (paid API). **No long runs have been done**; see
-[Validation](#validation-and-what-it-does-not-show) for exactly what has and has not been tested.
+through Ollama (local) or OpenRouter (paid API). One capable-model experiment has been run ([Results](#results-the-first-capable-model-experiment)); see
+[Validation](#validation-and-what-it-does-not-show) for exactly what has and has not been tested. Step 1, the
+single-agent baseline, is the sibling project `../bold-bardeen`.
 
 ---
 
@@ -262,6 +263,172 @@ Estimate first, then run one episode with 2 rounds.
 
 ---
 
+## Results: the first capable-model experiment
+
+*Written as a short article. Raw data: `examples/haiku_results/` (per-run `metrics.json` and `report.md`, plus
+`comparison.md`). This is the first real result of Steps 2 and 3, and it is small. Read the
+[threats to validity](#5-threats-to-validity) before quoting any number.*
+
+### Abstract
+
+We place three LLM agents (`anthropic/claude-haiku-5.5`) in a five-agent society with two scripted agents, an honest
+Tit For Tat and a deceptive Defector, and let every pair play a short repeated Prisoner's Dilemma (neutral labels
+Alpha/Beta). We vary two social channels, **messages** before each round and a **public ledger** of past moves, in a
+2 x 2 design, with three seeds per cell. Messages roughly doubled cooperation (22% to 41%, with little run-to-run
+spread). The ledger on its own *reduced* cooperation (22% to 9%). Both channels together gave an unstable society: one
+seed cooperated at 42% and another collapsed to 5%. A partner's promise of Alpha was met with Alpha about half the
+time; a promise of Beta was met with Alpha **never**. LLM agents out-earned the scripted agents in every condition.
+
+### 1. Question and motivation
+
+Step 1 (`../bold-bardeen`) measured one LLM against *fixed* opponents and found that a capable model plays near the
+best achievable score when it is told who the opponent is, and loses 10 to 25 points of efficiency when it is not.
+That setting has a known optimum and no social structure. The question here is the one in the project's title:
+**how do LLM agents behave in repeated social dilemmas when they can communicate and see each other's reputation?**
+Concretely:
+
+1. Does cheap talk (non-binding messages) change cooperation, and do the agents lie?
+2. Does a verifiable public record of past behaviour change who cooperates with whom?
+3. Do the two interact?
+
+Related work is in `../bold-bardeen/docs/research/literature-review.md`: Akata et al. 2023 and Fontana et al. 2024 for
+LLMs in repeated games, Park et al. 2023 for the memory design, and Piatti et al. 2024 and Vallinder and Hughes 2024
+for societies of LLM agents.
+
+### 2. Method
+
+**Game.** Per round, own points / partner points: both Alpha 3/3, I play Alpha and the partner Beta 0/5, the reverse
+5/0, both Beta 1/1. Labels are neutral so that the words "Prisoner's Dilemma", "cooperate" and "defect" do not trigger
+memorised behaviour.
+
+**Society.** Five agents: **Ada, Bo, Cy** (LLM, each with a memory stream), **Dee** (scripted, honest Tit For Tat,
+says what it will play) and **Eli** (scripted, always Beta but *promises* Alpha, a deliberate liar). Each episode is a
+full round-robin (10 matches); a match is 4 rounds; there are 2 episodes. That is 20 matches and 80 rounds per run.
+Agents know the match length. After each match every LLM agent writes an observation and a reflection into its memory.
+
+**Conditions** (the same agents, prompts and seed under each; see [the four conditions](#the-four-standard-conditions)):
+`baseline` (no messages, no record), `talk` (one message swap before every round), `watch` (the ledger: each agent
+sees every agent's cooperation rate and betrayal count, and the partner's recent rounds), `talk_watch` (both, plus the
+public board).
+
+**Model and replication.** `anthropic/claude-haiku-5.5` via OpenRouter, temperature 0.4, seeds 1, 2 and 3, 12 runs in
+total, 0 failed LLM calls and so 0 fallback moves. The seed changes the match schedule and the scripted randomness;
+it does not make the model deterministic. Command:
+
+```powershell
+python main.py --provider openrouter --model anthropic/claude-haiku-5.5 --conditions all --seeds 1,2,3 --episodes 2 --rounds 4 --output-dir output_haiku
+```
+
+**Measures** (definitions in [Metrics](#metrics-what-they-mean-and-why)): cooperation rate (share of Alpha),
+mutual-Alpha rate, points per round for LLM and scripted agents, promises and broken promises, cooperation after a
+promise, and the opening move of each match (first round only) split by the partner's public record.
+
+### 3. Results
+
+Mean ± standard deviation over 3 seeds (20 matches, 80 rounds per seed):
+
+| Condition | Cooperation | Mutual Alpha | Points/round, LLM | Points/round, scripted | Promises broken |
+|---|---|---|---|---|---|
+| baseline | 22% ± 14 | 14% ± 13 | 1.68 ± 0.32 | 1.26 ± 0.25 | n/a |
+| talk | **41% ± 3** | 32% ± 3 | **2.12 ± 0.11** | 1.59 ± 0.09 | 36% ± 4 |
+| watch | 9% ± 4 | 2% ± 3 | 1.34 ± 0.09 | 1.08 ± 0.08 | n/a |
+| talk_watch | 24% ± 19 | 17% ± 18 | 1.77 ± 0.48 | 1.20 ± 0.29 | 37% ± 5 |
+
+Per-seed cooperation, to show the spread behind the means:
+
+| Condition | Seed 1 | Seed 2 | Seed 3 |
+|---|---|---|---|
+| baseline | 12% | 26% | 33% |
+| talk | 38% | 41% | 44% |
+| watch | 6% | 13% | 7% |
+| talk_watch | 23% | 42% | **5%** |
+
+**Finding 1: messages raise cooperation, reliably.** Every `talk` seed (38-44%) is above every `baseline` seed
+(12-33%), and the `talk` spread is small. In `talk` the LLM agents average 2.12 points per round against 1.68 in
+`baseline`; the mutual-Alpha rate more than doubles (14% to 32%).
+
+**Finding 2: a promise carries information, and a Beta promise is a perfect signal.** The share of the LLM agents'
+moves that were Alpha, by what their partner had just promised (`talk` condition):
+
+| Partner promised | seed 1 | seed 2 | seed 3 |
+|---|---|---|---|
+| Alpha | 48% (n=75) | 59% (n=78) | 55% (n=85) |
+| Beta | 0% (n=14) | 0% (n=14) | 0% (n=6) |
+| nothing | 14% (n=7) | 0% (n=4) | 0% (n=5) |
+
+An announced Beta was never met with Alpha. A promised Alpha was trusted about half the time, in a society where 36%
+of promises are broken (all of Eli's are). The model sees the message text, so this shows that agents *use* what they
+are told; it cannot show *why* (that needs reading `trace.jsonl`).
+
+**Finding 3: the ledger alone lowered cooperation.** In `watch`, cooperation is 9% and mutual Alpha is 2%, against
+22% and 14% in `baseline`. Partners with a bad public record (below 50% cooperation) received an Alpha opening in 0 of
+54 cases across the three seeds. But only 5 openings in total involved a partner with a *good* record, so this cannot
+separate "the agent reacts to reputation" from "everyone has a bad record because everyone defects". A plausible
+mechanism is a spiral: the first betrayal is visible to everyone, every agent then defects against the betrayer, and
+those defections are in turn recorded. We have **not** verified this in the traces; it is a hypothesis.
+
+**Finding 4: with both channels, the outcome depends on the seed.** `talk_watch` cooperated at 23%, 42% and 5%. In
+seed 3 the society collapsed: partners promised Alpha 43 times and the agents answered none of those promises with
+Alpha, so the messages stopped being believed. Seed 2, with the same configuration, reached 42%, higher than any
+`baseline` or `watch` run; there, openings against partners with a good record (n=12) got Alpha 100% of the time
+against 29% (n=7) for bad records. So when the dynamic starts well, talk plus a record can support cooperation, and
+when it starts badly nothing recovers it. Three seeds cannot say how often each happens.
+
+**Finding 5: the LLM agents out-earn the scripted agents in every condition** (2.12 vs 1.59 in `talk`). In `talk`
+the always-Beta Eli earns about 1.5 points per round while the LLM agents earn 1.8-2.4, so Eli's lie pays less than it
+would against fixed opponents. The honest Tit For Tat, Dee, does worst in `watch` (0.75-0.94 points per round).
+
+**Finding 6: end-game defection is strong.** Cooperation in the last round of a match is 0-15% in every run, against
+7-54% in earlier rounds. With a known, short horizon this is expected, and it means part of the lost cooperation is a
+design effect (see below). Cooperation also falls from episode 1 to episode 2 in most runs.
+
+### 4. Discussion
+
+The strongest result is the simplest: **letting these agents talk makes them cooperate more**, and a stated intention
+to defect is always believed. The most interesting is the least certain: **showing them a verifiable record made them
+*less* cooperative**, and combining it with talk made the society fragile. One consistent story is that a record lets
+agents *punish* faster than it lets them *trust*, since one visible betrayal is a reason to defect and nothing in the
+record offers a way back. That is a hypothesis about the mechanism. If it holds, it is a warning for systems that give
+agents a reputation score without a way to repair it.
+
+It also adds to Step 1. There, a model that was told who it faced played near the optimum. Here, with no information
+(`baseline`), a capable model cooperated only 22% of the time in a society that contains a defector. The high
+efficiency in Step 1 came from knowing what to expect; without that the model is cautious.
+
+### 5. Threats to validity
+
+* **Three seeds, 20 matches per run.** The `baseline` (±14) and `talk_watch` (±19) spreads are large, so only the
+  `talk` and `watch` effects are clearly outside the noise. No significance test was run.
+* **Short, known horizon (4 rounds).** End-game defection (Finding 6) probably lowers cooperation everywhere. A longer
+  or unknown horizon is the first thing to change.
+* **One model, one society.** The three LLM agents are the same model with the same prompt apart from a persona line,
+  and there is one scripted liar and one honest reciprocator. Results describe haiku-5.5 in this population.
+* **The mechanisms behind Findings 3 and 4 are unverified.** The traces exist (`trace.jsonl`, not kept in the
+  repository because of size) but have not been read systematically.
+* **The reputation comparison is confounded** when nearly all partners have a bad record (Finding 3). The
+  `opening_by_third_party` rows also show a gap with reputation *off*, which is a correlation, not a response; do not
+  read them as an effect.
+* **The `promise` tag is self-reported by the model.**
+* LLM output is not deterministic even at a fixed seed.
+
+### 6. What this adds, and what comes next
+
+Together with Step 1 there is now a chain of evidence: a capable model plays near-optimally when informed (Step 1),
+cooperates only moderately when uninformed, is moved upward by cheap talk, and is moved downward, or made unstable,
+by a public record (this experiment). Next, in order of value: (1) read the `watch` and `talk_watch` seed-3 traces to
+confirm or reject the spiral hypothesis; (2) a longer or geometric horizon; (3) 5-10 seeds so that Finding 4 can be
+quantified; (4) a ledger that forgives (decays old betrayals) to test the "no way back" hypothesis; (5) mixed-model
+societies. The single-agent baseline and the literature review are in `../bold-bardeen`.
+
+### 7. Reproduction and cost
+
+The run took 3,986 LLM calls (240 per run without messages, 432 with messages, plus a few resumed matches). My
+pre-run estimate of about 2,000 calls was low by roughly a factor of two because it missed some calls. By the
+OpenRouter balance the run cost roughly $1.3, about $0.0003 per call. To reproduce, use the command in Section 2, and
+try `--episodes 1 --rounds 2` first.
+
+---
+
 ## Validation and what it does not show
 
 **Tested (offline, `pytest`, 55 tests):**
@@ -281,9 +448,9 @@ Estimate first, then run one episode with 2 rounds.
 the run shows that the pipeline works with a real model, **not** anything about LLM behaviour (6 rounds is far too
 little data).
 
-**Not done, on purpose (per the instruction not to run long experiments):** no multi-seed runs, no capable-model runs,
-no comparison between conditions with real models. The mock model ignores messages when it decides, so the
-`talk` row of an offline `--conditions all` is only a plumbing check; do not read it as a finding.
+**Capable-model experiment:** see [Results](#results-the-first-capable-model-experiment) (haiku-5.5, 4 conditions,
+3 seeds, 3,986 calls, 0 failures). The mock model ignores messages when it decides, so the `talk` row of an offline
+`--conditions all` is only a plumbing check; do not read it as a finding.
 
 **Known limitations to keep in mind when you interpret results:**
 
@@ -298,8 +465,7 @@ no comparison between conditions with real models. The mock model ignores messag
 
 ## Suggested next experiments
 
-1. `--conditions all --seeds 1,2,3,4,5` with a capable model (start with `--episodes 2 --rounds 4`), to see whether
-   talk and reputation raise cooperation and the LLM agents' points relative to classical ones.
+1. Read the traces of the collapsed runs, then extend the experiment to 5-10 seeds and a longer horizon (see Results, section 6).
 2. Replace the deceptive Defector with a deceptive Tit For Tat or a conditional cooperator to test whether agents learn
    whom to believe.
 3. Add `exchanges = 2` to allow negotiation, and mixed-model societies via per-agent `model`.

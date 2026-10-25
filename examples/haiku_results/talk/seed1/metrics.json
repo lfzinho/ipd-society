@@ -1,0 +1,161 @@
+{
+  "label": "talk=every_round | reputation=none",
+  "matches": 20,
+  "rounds": 80,
+  "cooperation_rate": 0.375,
+  "mutual_alpha_rate": 0.2875,
+  "mutual_beta_rate": 0.5375,
+  "points_per_round": 1.8375,
+  "points_per_round_llm": 2.0,
+  "points_per_round_classical": 1.59375,
+  "gini": 0.0761904761904762,
+  "cooperation_by_episode": {
+    "1": 0.375,
+    "2": 0.375
+  },
+  "end_game": {
+    "last_round": {
+      "rate": 0.1,
+      "n": 40
+    },
+    "earlier_rounds": {
+      "rate": 0.4666666666666667,
+      "n": 120
+    }
+  },
+  "messages": 160,
+  "mean_message_chars": 98.275,
+  "promises": 147,
+  "promises_broken": 58,
+  "promise_break_rate": 0.3945578231292517,
+  "cooperation_after_promise": {
+    "Alpha": {
+      "rate": 0.48,
+      "n": 75
+    },
+    "Beta": {
+      "rate": 0.0,
+      "n": 14
+    },
+    "none": {
+      "rate": 0.14285714285714285,
+      "n": 7
+    }
+  },
+  "opening_by_reputation": {
+    "good": {
+      "rate": 0.875,
+      "n": 8
+    },
+    "bad": {
+      "rate": 0.5833333333333334,
+      "n": 12
+    }
+  },
+  "opening_by_third_party": {
+    "clean": {
+      "rate": 0.8333333333333334,
+      "n": 12
+    },
+    "betrayer": {
+      "rate": 0.5,
+      "n": 12
+    }
+  },
+  "board_posts": 0,
+  "per_agent": {
+    "Bo": {
+      "kind": "llm",
+      "matches": 8,
+      "points": 58,
+      "points_per_round": 1.8125,
+      "cooperation_rate": 0.25,
+      "betrayals": 4,
+      "promises": 28,
+      "promises_broken": 14,
+      "deception_rate": 0.5,
+      "mean_trust": 4.75,
+      "expectation_accuracy": 0.78125,
+      "fallback_rounds": 0
+    },
+    "Cy": {
+      "kind": "llm",
+      "matches": 8,
+      "points": 72,
+      "points_per_round": 2.25,
+      "cooperation_rate": 0.46875,
+      "betrayals": 4,
+      "promises": 28,
+      "promises_broken": 4,
+      "deception_rate": 0.14285714285714285,
+      "mean_trust": 5.0,
+      "expectation_accuracy": 0.84375,
+      "fallback_rounds": 0
+    },
+    "Eli": {
+      "kind": "classical",
+      "matches": 8,
+      "points": 48,
+      "points_per_round": 1.5,
+      "cooperation_rate": 0.0,
+      "betrayals": 4,
+      "promises": 32,
+      "promises_broken": 32,
+      "deception_rate": 1.0,
+      "mean_trust": null,
+      "expectation_accuracy": null,
+      "fallback_rounds": 0
+    },
+    "Dee": {
+      "kind": "classical",
+      "matches": 8,
+      "points": 54,
+      "points_per_round": 1.6875,
+      "cooperation_rate": 0.71875,
+      "betrayals": 0,
+      "promises": 32,
+      "promises_broken": 0,
+      "deception_rate": 0.0,
+      "mean_trust": null,
+      "expectation_accuracy": null,
+      "fallback_rounds": 0
+    },
+    "Ada": {
+      "kind": "llm",
+      "matches": 8,
+      "points": 62,
+      "points_per_round": 1.9375,
+      "cooperation_rate": 0.4375,
+      "betrayals": 2,
+      "promises": 27,
+      "promises_broken": 8,
+      "deception_rate": 0.2962962962962963,
+      "mean_trust": 4.65625,
+      "expectation_accuracy": 0.90625,
+      "fallback_rounds": 0
+    }
+  },
+  "llm_stats": {
+    "calls": 216,
+    "retries": 0,
+    "prompt_tokens": 202814,
+    "completion_tokens": 97714
+  },
+  "agent_stats": {
+    "Ada": {
+      "fallback_messages": 0,
+      "fallback_moves": 0,
+      "failed_reflections": 0
+    },
+    "Bo": {
+      "fallback_messages": 0,
+      "fallback_moves": 0,
+      "failed_reflections": 0
+    },
+    "Cy": {
+      "fallback_messages": 0,
+      "fallback_moves": 0,
+      "failed_reflections": 0
+    }
+  }
+}
